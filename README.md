@@ -41,10 +41,15 @@ Directional Buttons is used to move the character.
 Further actions of A-B-C can be from crouches or from the air.
 Pressing L/6 causes the character to grab within their reach.
 
+HEALTH:
 The basic premise of the game is to deplete the opponent's healthbar to zero. Depleting the healthbar is caused by landing your own attacks onto them. Strategize your moves and assure you yourself don't lose all of your health.
 
-Characters
+METER:
+Each playable character has a working magic meter system. Meter is used to activate a character's special attack using the J/4 button on the keyboard. Using a special move takes up a certain amount of meter depending on the move itself. In order to gain meter, the player can...
+1. Dash forward
+2. Attack the opponent
 
+CHARACTERS:
 Gina: A well rounded fighter in which the game design centres around. Gina's movesets focuses on keeping a midrange distance on the opponent in the start of the round and slowly inches her way into close quarters.
 
 Otis(not-workable): An aggressive fighter whose main goal is to quickly close in and apply pressure. All his movesets have incredibly short range, but his moves are fast and fuzzy.
