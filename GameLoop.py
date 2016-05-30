@@ -4,6 +4,7 @@ from Player import Player
 from Gina import Gina
 from Otis import Otis
 from health_system import HealthSystem
+from health_system import MagicSystem
 from boxes import Boundaries
 
 LEFT_BOUND = Boundaries(-200, 0, 100, 600)
@@ -17,6 +18,8 @@ def retract_attack(player):
     player.crouch_attack_b = False
     player.attack_c = False
     player.crouch_attack_c = False
+
+    player.grabbing = False
 
     player.off_set = False
     player.off_set_value = 0
@@ -57,6 +60,7 @@ def game_loop():
     playerOne = Player(Gina(), 1, display_width/2 - 250, display_height/2.3)
     playerTwo = Player(Gina(), 2, display_width/2 + 120, display_height/2.3)
     health_bar = HealthSystem(playerOne, playerTwo)
+    magic_bar = MagicSystem(playerOne, playerTwo)
 
     stage = pygame.image.load('Sprites/Stages/TrainingRoom.png')
 
@@ -71,11 +75,14 @@ def game_loop():
         #gameDisplay.fill((255, 255, 255))
         game_display.blit(stage, (stage_x, stage_y))
         health_bar.show_bar(game_display, playerOne, playerTwo)
+        magic_bar.show_bar(game_display, playerOne, playerTwo)
 
-        playerOne.update(x1_change)
-        playerTwo.update(x2_change)
+        playerOne.update(x1_change, playerTwo)
+        playerTwo.update(x2_change, playerOne)
         playerOne.display_player(game_display, playerOne.x, playerOne.y)
         playerTwo.display_player(game_display, playerTwo.x, playerTwo.y)
+        playerOne.display_effects(game_display)
+        playerTwo.display_effects(game_display)
 
         LEFT_BOUND.draw_bounds(game_display)
         RIGHT_BOUND.draw_bounds(game_display)
@@ -89,30 +96,49 @@ def game_loop():
 
             keys = pygame.key.get_pressed()
 
-            if keys[pygame.K_KP7]:
-                if not playerTwo.attack_b and not playerTwo.attack_c:
+            if keys[pygame.K_KP6]:
+                if not playerTwo.setAction:
+                    playerTwo.grabbing = True
+            elif keys[pygame.K_KP7]:
+                if not playerTwo.attack_b and not playerTwo.attack_c and not playerTwo.grabbing:
                     if playerTwo.crouching is True:
                         if not playerTwo.setAction:
                             playerTwo.crouch_attack_a = True
                     else:
                         if not playerTwo.setAction:
                             playerTwo.attack_a = True
+                        elif playerTwo.isJumping or playerTwo.isDescending:
+                            if not playerTwo.jump_attack_b and not playerTwo.jump_attack_c:
+                                playerTwo.jump_attack_a = True
             elif keys[pygame.K_KP8]:
-                if not playerTwo.attack_a and not playerTwo.attack_c:
+                if not playerTwo.attack_a and not playerTwo.attack_c and not playerTwo.grabbing:
                     if playerTwo.crouching is True:
                         if not playerTwo.setAction:
                             playerTwo.crouch_attack_b = True
                     else:
                         if not playerTwo.setAction:
                             playerTwo.attack_b = True
+                        elif playerTwo.isJumping or playerTwo.isDescending:
+                            if not playerTwo.jump_attack_a and not playerTwo.jump_attack_c:
+                                playerTwo.jump_attack_b = True
             elif keys[pygame.K_KP9]:
-                if not playerTwo.attack_a and not playerTwo.attack_b:
+                if not playerTwo.attack_a and not playerTwo.attack_b and not playerTwo.grabbing:
                     if playerTwo.crouching is True:
                         if not playerTwo.setAction:
                             playerTwo.crouch_attack_c = True
                     else:
                         if not playerTwo.setAction:
                             playerTwo.attack_c = True
+                        elif playerTwo.isJumping or playerTwo.isDescending:
+                            if not playerTwo.jump_attack_a and not playerTwo.jump_attack_b:
+                                playerTwo.jump_attack_c = True
+            elif keys[pygame.K_KP4]:
+                if not playerTwo.attack_a and not playerTwo.attack_b \
+                    and not playerTwo.attack_c and not playerTwo.grabbing and not playerTwo.setAction:
+                    if not playerTwo.isJumping and not playerTwo.isDescending:
+                        playerTwo.special_one = True
+                else:
+                    pass
             elif keys[pygame.K_UP] and keys[pygame.K_LEFT]:
                 if not playerTwo.forward_jumping and not playerTwo.neutral_jumping and not playerTwo.setAction:
                     playerTwo.isJumping = True
@@ -129,58 +155,81 @@ def game_loop():
                 if keys[pygame.K_DOWN]:
                     playerTwo.crouching = True
                     if playerTwo.facingRight:
-                        playerTwo.blockingLow = True
+                        if not playerTwo.isJumping and not playerTwo.isDescending:
+                            playerTwo.blockingLow = True
                         x2_change = 0
                     else:
                         x2_change = 0
                 else:
                     if playerTwo.facingRight:
-                        playerTwo.blockingHigh = True
-                        x2_change = -1.5
+                        if not playerTwo.isJumping and not playerTwo.isDescending:
+                            playerTwo.blockingHigh = True
+                        x2_change = -2.5
                     else:
-                        x2_change = -1.5
+                        x2_change = -2.5
             elif keys[pygame.K_RIGHT]:
                 if keys[pygame.K_DOWN]:
                     playerTwo.crouching = True
                     if playerTwo.facingRight:
                         x2_change = 0
                     else:
-                        playerTwo.blockingLow = True
+                        if not playerTwo.isJumping and not playerTwo.isDescending:
+                            playerTwo.blockingLow = True
                         x2_change = 0
                 else:
                     if playerTwo.facingRight:
-                        x2_change = 1.5
+                        x2_change = 2.5
                     else:
-                        playerTwo.blockingHigh = True
-                        x2_change = 1.5
+                        if not playerTwo.isJumping and not playerTwo.isDescending:
+                            playerTwo.blockingHigh = True
+                        x2_change = 2.5
             elif keys[pygame.K_DOWN]:
                 playerTwo.crouching = True
                 x2_change = 0
 
-            if keys[pygame.K_u]:
-                if not playerOne.attack_b and not playerOne.attack_c:
+            if keys[pygame.K_l]:
+                if not playerOne.setAction and not playerOne.isJumping and not playerOne.isDescending:
+                    playerOne.grabbing = True
+            elif keys[pygame.K_u]:
+                if not playerOne.attack_b and not playerOne.attack_c and not playerOne.grabbing:
                     if playerOne.crouching is True:
                         if not playerOne.setAction:
                             playerOne.crouch_attack_a = True
                     else:
                         if not playerOne.setAction:
                             playerOne.attack_a = True
+                        elif playerOne.isJumping or playerOne.isDescending:
+                            if not playerOne.jump_attack_b and not playerOne.jump_attack_c:
+                                playerOne.jump_attack_a = True
             elif keys[pygame.K_i]:
-                if not playerOne.attack_a and not playerOne.attack_c:
+                if not playerOne.attack_a and not playerOne.attack_c and not playerOne.grabbing:
                     if playerOne.crouching is True:
                         if not playerOne.setAction:
                             playerOne.crouch_attack_b = True
                     else:
                         if not playerOne.setAction:
                             playerOne.attack_b = True
+                        elif playerOne.isJumping or playerOne.isDescending:
+                            if not playerOne.jump_attack_a and not playerOne.jump_attack_c:
+                                playerOne.jump_attack_b = True
             elif keys[pygame.K_o]:
-                if not playerOne.attack_a and not playerOne.attack_b:
+                if not playerOne.attack_a and not playerOne.attack_b and not playerOne.grabbing:
                     if playerOne.crouching is True:
                         if not playerOne.setAction:
                             playerOne.crouch_attack_c = True
                     else:
                         if not playerOne.setAction:
                             playerOne.attack_c = True
+                        elif playerOne.isJumping or playerOne.isDescending:
+                            if not playerOne.jump_attack_a and not playerOne.jump_attack_b:
+                                playerOne.jump_attack_c = True
+            elif keys[pygame.K_j]:
+                if not playerOne.attack_a and not playerOne.attack_b \
+                    and not playerOne.attack_c and not playerOne.grabbing and not playerOne.setAction:
+                    if not playerOne.isJumping and not playerOne.isDescending:
+                        playerOne.special_one = True
+                else:
+                    pass
             elif keys[pygame.K_w] and keys[pygame.K_a]:
                 if not playerOne.forward_jumping and not playerOne.neutral_jumping and not playerOne.setAction:
                     playerOne.isJumping = True
@@ -197,30 +246,34 @@ def game_loop():
                 if keys[pygame.K_s]:
                     playerOne.crouching = True
                     if playerOne.facingRight:
-                        playerOne.blockingLow = True
+                        if not playerOne.isJumping and not playerOne.isDescending:
+                            playerOne.blockingLow = True
                         x1_change = 0
                     else:
                         x1_change = 0
                 else:
                     if playerOne.facingRight:
-                        playerOne.blockingHigh = True
-                        x1_change = -1.5
+                        if not playerOne.isJumping and not playerOne.isDescending:
+                            playerOne.blockingHigh = True
+                        x1_change = -2.5
                     else:
-                        x1_change = -1.5
+                        x1_change = -2.5
             elif keys[pygame.K_d]:
                 if keys[pygame.K_s]:
                     playerOne.crouching = True
                     if playerOne.facingRight:
                         x1_change = 0
                     else:
-                        playerOne.blockingLow = True
+                        if not playerOne.isJumping and not playerOne.isDescending:
+                            playerOne.blockingLow = True
                         x1_change = 0
                 else:
                     if playerOne.facingRight:
-                        x1_change = 1.5
+                        x1_change = 2.5
                     else:
-                        playerOne.blockingHigh = True
-                        x1_change = 1.5
+                        if not playerOne.isJumping and not playerOne.isDescending:
+                            playerOne.blockingHigh = True
+                        x1_change = 2.5
             elif keys[pygame.K_s]:
                 playerOne.crouching = True
                 x1_change = 0
@@ -274,6 +327,8 @@ def game_loop():
                         x2_change = 0
 
         # Checks to see for hit collision between the two players...
+        playerOne.fire_ball_collide(playerTwo)
+
         player_one_attack = playerOne.check_attack_collision(playerTwo)
         player_two_attack = playerTwo.check_attack_collision(playerOne)
         if player_one_attack is not None:
@@ -310,8 +365,10 @@ def game_loop():
         player_one_hit_wall = check_bounds(playerOne)
         player_two_hit_wall = check_bounds(playerTwo)
 
+        # Checks wall collision for both player one and two.
         if playerOne.x <= 0:
             if playerTwo.x + playerTwo.character.rect.width < 800:
+                print()
                 diff = 0 - playerOne.x
                 playerOne.x = 0
 
@@ -361,6 +418,49 @@ def game_loop():
                     stage_x -= diff
             else:
                 playerTwo.x = 800 - playerTwo.character.rect.width
+
+        if playerOne.check_grab_collision(playerTwo) and not playerTwo.isJumping and not playerTwo.isDescending:
+
+            while playerTwo.grab_timer() is False:
+                if playerTwo.grabbing is True:
+                    playerOne.grabbing = False
+                    playerTwo.grabbing = False
+
+                    playerOne.push_back = True
+                    playerTwo.push_back = True
+
+                    playerOne.timer = 2
+                    playerTwo.timer = 2
+
+                    break
+
+            if playerTwo.timer <= 0:
+                playerTwo.setAction = False
+                playerOne.grabbing = False
+
+                playerOne.throw = True
+                playerTwo.grabbed = True
+
+        if playerTwo.check_grab_collision(playerOne) and not playerOne.isJumping and not playerOne.isDescending:
+            while playerOne.grab_timer() is False:
+                if playerOne.grabbing is True:
+                    playerTwo.grabbing = False
+                    playerOne.grabbing = False
+
+                    playerTwo.push_back = True
+                    playerOne.push_back = True
+
+                    playerOne.timer = 2
+                    playerTwo.timer = 2
+
+                    break
+
+            if playerOne.timer <= 0:
+                playerOne.setAction = False
+                playerTwo.grabbing = False
+
+                playerTwo.throw = True
+                playerOne.grabbed = True
 
         # Checks for player_1 hurt_box to player_2 hurt_box collision so that both of them do not overlap.
         if playerOne.check_collision(playerTwo) or playerTwo.check_collision(playerOne):
@@ -420,6 +520,7 @@ def game_loop():
                                 playerTwo.x = playerOne.max_collision_right(playerTwo) - 30
                     elif playerOne.isDescending:
                         playerTwo.x = playerOne.max_collision_right(playerTwo)
+
                 if playerTwo.setAction:
                     if playerTwo.isDashing:
                         if playerOne.isDashing:
@@ -448,9 +549,15 @@ def game_loop():
                             playerTwo.x = playerTwo.x + x1_change
                     elif x2_change == 0:
                         if player_two_hit_wall == 'right':
-                            playerOne.x = playerTwo.x - playerOne.character.rect.width
+                            if playerOne.isDescending:
+                                playerOne.x = playerTwo.max_collision_left(playerOne)
+                            else:
+                                playerOne.x = playerTwo.x - playerOne.character.rect.width
                         elif player_two_hit_wall == 'left':
-                            playerOne.x = playerTwo.x + playerTwo.character.rect.width
+                            if playerOne.isDescending:
+                                playerOne.x = playerTwo.max_collision_right(playerOne)
+                            else:
+                                playerOne.x = playerTwo.x + playerTwo.character.rect.width
                         else:
                             playerTwo.x = playerTwo.x + x1_change
 
@@ -467,9 +574,15 @@ def game_loop():
                             playerOne.x = playerOne.x + x2_change
                     elif x1_change == 0:
                         if player_one_hit_wall == 'right':
-                            playerTwo.x = playerOne.x - playerTwo.character.rect.width
+                            if playerTwo.isDescending:
+                                playerTwo.x = playerOne.max_collision_left(playerTwo)
+                            else:
+                                playerTwo.x = playerOne.x - playerTwo.character.rect.width
                         elif player_one_hit_wall == 'left':
-                            playerTwo.x = playerOne.x + playerOne.character.rect.width
+                            if playerTwo.isDescending:
+                                playerTwo.x = playerOne.max_collision_right(playerTwo)
+                            else:
+                                playerTwo.x = playerOne.x + playerOne.character.rect.width
                         else:
                             playerOne.x = playerOne.x + x2_change
 
@@ -483,9 +596,15 @@ def game_loop():
                             playerTwo.dash_collide = True
                         else:
                             if player_two_hit_wall == 'right':
-                                playerOne.x = playerTwo.x - playerOne.character.rect.width
+                                if playerOne.isDescending:
+                                    playerOne.x = playerTwo.max_collision_left(playerOne)
+                                else:
+                                    playerOne.x = playerTwo.x - playerOne.character.rect.width
                             elif player_two_hit_wall == 'left':
-                                playerOne.x = playerTwo.x + playerTwo.character.rect.width
+                                if playerOne.isDescending:
+                                    playerOne.x = playerTwo.max_collision_right(playerOne)
+                                else:
+                                    playerOne.x = playerTwo.x + playerTwo.character.rect.width
                             else:
                                 playerTwo.x = playerOne.max_collision_left(playerTwo) - 120
                     elif playerOne.isDescending:
@@ -497,9 +616,15 @@ def game_loop():
                             playerTwo.dash_collide = True
                         else:
                             if player_one_hit_wall == 'right':
-                                playerTwo.x = playerOne.x - playerTwo.character.rect.width
+                                if playerTwo.isDescending:
+                                    playerTwo.x = playerOne.max_collision_left(playerTwo)
+                                else:
+                                    playerTwo.x = playerOne.x - playerTwo.character.rect.width
                             elif player_one_hit_wall == 'left':
-                                playerTwo.x = playerOne.x + playerOne.character.rect.width
+                                if playerTwo.isDescending:
+                                    playerTwo.x = playerOne.max_collision_right(playerTwo)
+                                else:
+                                    playerTwo.x = playerOne.x + playerOne.character.rect.width
                             else:
                                 playerOne.x = playerTwo.max_collision_right(playerOne) - 30
                     elif playerTwo.isDescending:

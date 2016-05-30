@@ -3,6 +3,11 @@ import pygame
 class Character(pygame.sprite.Sprite):
 
     def __init__(self):
+        """
+        Covers the "abstract" class for a character. Primarily holds the health,and animations for characters.
+        :return:
+        """
+
         super().__init__()
 
         self.name = None
@@ -21,6 +26,7 @@ class Character(pygame.sprite.Sprite):
 
         self.hit_box = []
         self.hurt_box = []
+        self.effects_animation = []
 
         self.standing = []
         self.crouching = []
@@ -30,12 +36,25 @@ class Character(pygame.sprite.Sprite):
         self.walkFoward = []
         self.walkBackward = []
 
-        self.hurt_animation = []
+        self.grab_animation = []
+
         self.stand_a_animation = []
         self.crouch_a_animation = []
+        self.jump_a_animation = []
+
         self.stand_b_animation = []
         self.crouch_b_animation = []
+        self.jump_b_animation = []
+
         self.stand_c_animation = []
         self.crouch_c_animation = []
+        self.jump_c_animation = []
 
+        self.special_one_animation = []
+
+        self.victory_animation = []
+        self.crumble_animation = []
+        self.defeat_animation = []
+
+        self.hurt_animation = []
         self.wakeup_animation = []
